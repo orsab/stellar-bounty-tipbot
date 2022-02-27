@@ -37,7 +37,7 @@ $ npm start
 
 **TIP_ASSET_ISSUER** - Tip asset issuer
 
-**NETWORK** - Stellar network
+**NETWORK** - Stellar network (testnet | public)
 
 **CLAIMABALE_BALANCE_CLAWBACK_TIME** - If target member dont't have the trustline for tip asset - payment will be send by the claimable balance for limited time in seconds. This claimable balance can be clawed back after setted time.
 
@@ -49,5 +49,5 @@ $ npm start
 🐻 - 10 BEARS
 🐼 - 5 BEARS
 🧸 - 1 BEAR
-* If target member does not have the linked Stellar account - notification message will be sent to target and source accounts.
+* If target member does not have the linked Stellar account - notification message will be sent to target and source(DM) accounts.
 * If target member has the Stellar account but not the trustline - Claimable balance will be created with clawback timeout.

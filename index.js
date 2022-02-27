@@ -32,32 +32,56 @@ client.on("interactionCreate", async (interaction) => {
     const amount = options.data.find((d) => d.name === "amount")?.value;
     const targetMemberId = options.data.find((d) => d.name === "member")?.value;
 
-    tipMember(amount, targetMemberId, member)
+    await interaction.reply({
+      content: `Account tip in progress...`,
+      ephemeral: true,
+    });
+
+    const guild = client.guilds.cache.get(process.env.DISCORDJS_GUILDID);
+    const targetMember = guild.members.cache.get(targetMemberId);
+    const memberUser = guild.members.cache.get(member.user.id);
+
+    await tipMember(amount, targetMemberId, memberUser)
       .then(({ type }) => {
         // Account not exists
         if (type === -1) {
-          interaction.followUp({
-            content:`Account @${member.user.username} haven't an account`,
-            ephemeral: true
-          })
-          reaction.message.author.send(
-            `You don't have the Stellar account, please got to: https://lobstr.co or another resource and create address to be able receive the tips. After this type ``` /
-              link <
-              address >
-              ```. Thank you`
-          );
+          Promise.all([
+            interaction.followUp({
+              content: `Account <@!${member.id}> not exist or not funded`,
+              ephemeral: true,
+            }),
+            targetMember.send(
+              `You don't have the Stellar account, please got to: https://lobstr.co or another resource and create address to be able receive the tips. 
+              After this type ``` /
+                link <
+                address >
+                ```. Thank you`
+            ),
+          ]);
         }
         // Trustline not exists
         else if (type === -2) {
-          interaction.followUp({
-            content: `Tip ${amount} sended in claimable balance from @${member.user.username}`,
-            ephemeral: true,
-          });
+          Promise.all([
+            interaction.followUp({
+              content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} sended in claimable balance to <@!${targetMember.id}>`,
+              ephemeral: true,
+            }),
+            targetMember.send({
+              content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} received in claimable balance from @${memberUser.user.username}`,
+              ephemeral: true,
+            }),
+          ]);
         } else if (type === 0) {
-          interaction.followUp({
-            content: `Tip ${amount} sended from @${member.user.username}`,
-            ephemeral: true,
-          });
+          Promise.all([
+            interaction.followUp({
+              content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} sended to @${targetMember.id}`,
+              ephemeral: true,
+            }),
+            targetMember.send({
+              content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} received from <@!${memberUser.id}>`,
+              ephemeral: true,
+            }),
+          ]);
         }
       })
       .catch((e) => {
@@ -65,15 +89,16 @@ client.on("interactionCreate", async (interaction) => {
           content: `Tip fail: ${e}`,
           ephemeral: true,
         });
-      })
-      
-      interaction.reply({
-        content: `Account tip in progress...`,
-        ephemeral: true,
       });
-
   } else if (commandName === "link") {
-    linkMember(interaction)
+    const address = options.data.find((d) => d.name === "address")?.value;
+
+    await interaction.reply({
+      content: "Link in progress...",
+      ephemeral: true,
+    });
+
+    await linkMember(interaction.member.id, address)
       .then((member) => {
         interaction.followUp({
           content: `Account account linked`,
@@ -81,17 +106,18 @@ client.on("interactionCreate", async (interaction) => {
         });
       })
       .catch((e) => {
-        interaction.followUp({
+        interaction.member.send({
           content: `Link account fail: ${e}`,
           ephemeral: true,
         });
       });
-    interaction.reply({
-      content: "Link in progress...",
+  } else if (commandName === "info") {
+    await interaction.reply({
+      content: "Info in progress...",
       ephemeral: true,
     });
-  } else if (commandName === "info") {
-    infoMember(interaction)
+
+    await infoMember(interaction)
       .then((member) => {
         interaction.followUp({
           content: JSON.stringify(member),
@@ -104,11 +130,6 @@ client.on("interactionCreate", async (interaction) => {
           ephemeral: true,
         });
       });
-
-    interaction.reply({
-      content: "Info in progress...",
-      ephemeral: true,
-    });
   }
 });
 
@@ -117,8 +138,9 @@ client.on("messageReactionAdd", (reaction, user) => {
   let amount = 0;
   const targetMemberId = reaction.message?.author?.id;
 
-  // Old message - return
+  // Old message - TODO
   if (!targetMemberId) {
+    
     console.log("Message is to old, try on new message");
     return;
   }
@@ -140,15 +162,17 @@ client.on("messageReactionAdd", (reaction, user) => {
 
   const guild = client.guilds.cache.get(process.env.DISCORDJS_GUILDID);
 
-  const member = guild.members.cache.get(user.id);
-  tipMember(amount, targetMemberId, member)
+  const targetMember = guild.members.cache.get(targetMemberId);
+  const memberUser = guild.members.cache.get(user.id);
+
+  tipMember(amount, targetMemberId, memberUser)
     .then(({ type }) => {
       // Account not exists
       if (type === -1) {
         interaction.reply({
-          content:`Account @${reaction.message.author.username} haven't an account`,
-          ephemeral: true
-        })
+          content: `Account <@!${reaction.message.author.id}> not exists or not funded`,
+          ephemeral: true,
+        });
         reaction.message.author.send(
           `You don't have the Stellar account, please got to: https://lobstr.co or another resource and create address to be able receive the tips. After this type ``` /
             link <
@@ -158,15 +182,27 @@ client.on("messageReactionAdd", (reaction, user) => {
       }
       // Trustline not exists
       else if (type === -2) {
-        reaction.message.reply({
-          content: `Tip ${amount} sended in claimable balance from @${member.user.username}`,
-          ephemeral: true,
-        });
+        Promise.all([
+          user.send({
+            content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} sended in claimable balance to <@!${targetMember.id}>`,
+            ephemeral: true,
+          }),
+          targetMember.send({
+            content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} received in claimable balance from @${user.username}`,
+            ephemeral: true,
+          }),
+        ]);
       } else if (type === 0) {
-        reaction.message.reply({
-          content: `Tip ${amount} sended from @${member.user.username}`,
-          ephemeral: true,
-        });
+        Promise.all([
+          user.send({
+            content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} sended to <@!${targetMember.id}>`,
+            ephemeral: true,
+          }),
+          targetMember.send({
+            content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} received from <@!${user.id}>`,
+            ephemeral: true,
+          }),
+        ]);
       }
     })
     .catch((e) => {
