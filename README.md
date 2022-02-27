@@ -28,11 +28,17 @@ $ npm start
 
 ### Environment variables
 **DISCORDJS_BOT_TOKEN** - Bot token
+
 **DISCORDJS_GUILDID** - Discord guild(server) id
+
 **CUSTODIAN_WALLET** - Private key of custodian wallet (must to have some balance of tip asset)
+
 **TIP_ASSET_CODE** - Tip asset code
+
 **TIP_ASSET_ISSUER** - Tip asset issuer
+
 **NETWORK** - Stellar network
+
 **CLAIMABALE_BALANCE_CLAWBACK_TIME** - If target member dont't have the trustline for tip asset - payment will be send by the claimable balance for limited time in seconds. This claimable balance can be clawed back after setted time.
 
 ### How it works
