@@ -49,5 +49,6 @@ $ npm start
 🐻 - 10 BEARS
 🐼 - 5 BEARS
 🧸 - 1 BEAR
+
 * If target member does not have the linked Stellar account - notification message will be sent to target and source(DM) accounts.
 * If target member has the Stellar account but not the trustline - Claimable balance will be created with clawback timeout.
