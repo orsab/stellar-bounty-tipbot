@@ -34,11 +34,17 @@ module.exports = async (amount, targetMemberId, member) => {
     )
   ) {
     typeResponse = -2;
-    await stellar.payClaimableToAddress(
-      targetAccount,
-      amount,
-      ASSET
-    );
+    
+    try{
+      await stellar.payClaimableToAddress(
+        targetAccount,
+        amount,
+        ASSET
+      );
+    }catch(e){
+      // Owner haven't BEAR coin
+      typeResponse = -3
+    }
   }
   // Account exists and trustline exists = Send payment
   else {

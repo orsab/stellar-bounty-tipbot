@@ -27,6 +27,7 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
 
   const { commandName, options, member } = interaction;
+  const guild = client.guilds.cache.get(process.env.DISCORDJS_GUILDID);
 
   if (commandName === "tip") {
     const amount = options.data.find((d) => d.name === "amount")?.value;
@@ -37,7 +38,6 @@ client.on("interactionCreate", async (interaction) => {
       ephemeral: true,
     });
 
-    const guild = client.guilds.cache.get(process.env.DISCORDJS_GUILDID);
     const targetMember = guild.members.cache.get(targetMemberId);
     const memberUser = guild.members.cache.get(member.user.id);
 
@@ -90,7 +90,24 @@ client.on("interactionCreate", async (interaction) => {
           ephemeral: true,
         });
       });
-  } else if (commandName === "link") {
+  } else if (commandName === "sponsor") {
+    let role = guild.roles.cache.find(r => r.name === "Sponsor");
+
+    if(!interaction.member.roles.cache.some(r => r.name === 'Sponsor')){
+      interaction.member.roles.add(role)
+      interaction.reply({
+        content:'Congrats! You now a Sponsor',
+        ephemeral:true
+      })
+    }
+    else{
+      interaction.reply({
+        content:'You are already Sponsor!',
+        ephemeral:true
+      })
+    }
+  }
+  else if (commandName === "link") {
     const address = options.data.find((d) => d.name === "address")?.value;
 
     await interaction.reply({
@@ -134,16 +151,14 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 // Reaction event handler
-client.on("messageReactionAdd", (reaction, user) => {
+client.on("messageReactionAdd", async (reaction, user) => {
   let amount = 0;
-  const targetMemberId = reaction.message?.author?.id;
-
-  // Old message - TODO
-  if (!targetMemberId) {
-    
-    console.log("Message is to old, try on new message");
-    return;
+  let message = reaction.message
+  if(message.partial){
+    message = await message.fetch()
   }
+
+  const targetMemberId = message?.author?.id;
 
   switch (reaction.emoji.name) {
     case "🐻‍❄️":
@@ -169,7 +184,7 @@ client.on("messageReactionAdd", (reaction, user) => {
     .then(({ type }) => {
       // Account not exists
       if (type === -1) {
-        interaction.reply({
+        user.send({
           content: `Account <@!${reaction.message.author.id}> not exists or not funded`,
           ephemeral: true,
         });
@@ -192,7 +207,15 @@ client.on("messageReactionAdd", (reaction, user) => {
             ephemeral: true,
           }),
         ]);
-      } else if (type === 0) {
+      } 
+      // Owner haven't the trustline to BEAR coin
+      else if (type === -3) {
+        user.send({
+          content: `Haven't trustline or enough ${process.env.TIP_ASSET_CODE}`,
+          ephemeral: true,
+        })
+      }
+      else if (type === 0) {
         Promise.all([
           user.send({
             content: `Tip of ${amount} ${process.env.TIP_ASSET_CODE} sended to <@!${targetMember.id}>`,

@@ -40,6 +40,13 @@ module.exports = async (client) => {
     description: "Get info about yourself",
   });
 
+  if(process.env.NETWORK === 'testnet'){
+    guild.commands.create({
+      name: "sponsor",
+      description: "For testing reasons everyone can be Sponsor",
+    });
+  }
+
   if (!guild.roles.cache.some((role) => role.name === "Sponsor")) {
     guild.roles.create({
       name: "Sponsor",
