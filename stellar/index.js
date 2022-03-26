@@ -84,6 +84,29 @@ class StellarHandler {
     return this.server.submitTransaction(tx);
   }
 
+  async payment(source, sourceSecret, target, amount, asset) {
+    const sourceAcc = await this.server.loadAccount(
+      source
+    );
+
+    let payment = sdk.Operation.payment({
+      destination: target,
+      asset: asset,
+      amount: String(amount),
+    });
+
+    const tx = new sdk.TransactionBuilder(sourceAcc, {
+      networkPassphrase: NETWORK,
+      fee: sdk.BASE_FEE,
+    })
+      .addOperation(payment)
+      .setTimeout(30)
+      .build();
+
+    tx.sign(sdk.Keypair.fromSecret(sourceSecret));
+    return this.server.submitTransaction(tx);
+  }
+
   async payToAddress(targetAcc, amount, asset) {
     const custodianAcc = await this.server.loadAccount(
       this.custodian.publicKey()
@@ -121,6 +144,27 @@ class StellarHandler {
       : address.accountId();
 
     return account.balances[0].balance;
+  }
+
+  async setTrustline(address, addressSecret, asset) {
+    const addressAcc = await this.server.loadAccount(
+      address
+    );
+
+    let payment = sdk.Operation.changeTrust({
+      asset,
+    });
+
+    const tx = new sdk.TransactionBuilder(addressAcc, {
+      networkPassphrase: NETWORK,
+      fee: sdk.BASE_FEE,
+    })
+      .addOperation(payment)
+      .setTimeout(30)
+      .build();
+
+    tx.sign(sdk.Keypair.fromSecret(addressSecret));
+    return this.server.submitTransaction(tx);
   }
 }
 
