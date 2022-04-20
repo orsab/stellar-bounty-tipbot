@@ -1,5 +1,5 @@
 # Tip Bot
-This is the tip bot for Discord channels. By reacting the message by emoji icon of bear(can be changed) you can tip someone with custom tokens. Or just by slash command ```/tip <amount> <user>```
+This is the tip bot for Discord server. Comunity manager with role of Sponsor can award participant by reacting the his message by emoji icon of bear(see below) or by slash command ```/tip <amount> <user>```.
 
 ### Requirements
 - Nodejs 16+
